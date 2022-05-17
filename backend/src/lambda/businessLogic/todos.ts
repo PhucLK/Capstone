@@ -17,8 +17,12 @@ export async function updateTodo(userId: string, id: string, payload: UpdateTodo
   return todoAccess.updateTodo(userId, id, payload);
 }
 
-export async function updateTodoAttachment(userId: string, id: string): Promise<void> {
-  return todoAccess.updateTodoAttachment(userId, id);
+export async function updateTodoAttachment(userId: string, id: string, s3Key: string): Promise<void> {
+  return todoAccess.updateTodoAttachment(userId, id, s3Key);
+}
+
+export async function removeTodoAttachment(userId: string, id: string): Promise<void> {
+  return todoAccess.removeTodoAttachment(userId, id);
 }
 
 export async function deleteTodo(userId: string, id: string): Promise<void> {

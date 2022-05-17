@@ -14,8 +14,9 @@ export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     logger.info('Starting update todo attachment', event);
     const todoId = event.pathParameters.todoId;
+    const payload = JSON.parse(event.body);
     const userId: string = getUserId(event);
-    const updatedItem = await updateTodoAttachment(userId, todoId);
+    const updatedItem = await updateTodoAttachment(userId, todoId, payload.s3Key);
 
     return {
       statusCode: 200,

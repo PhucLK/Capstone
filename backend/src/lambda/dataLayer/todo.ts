@@ -82,14 +82,27 @@ export class TodoAccess {
     return;
   }
   
-  async updateTodoAttachment(userId: string, id: string): Promise<void> {
+  async updateTodoAttachment(userId: string, id: string, s3Key: string): Promise<void> {
     await this.docClient.update({
       TableName: this.todoTable,
       Key: { id, userId },
       UpdateExpression: 'set #attachmentUrl = :attachmentUrl',
       ExpressionAttributeNames: { '#attachmentUrl': 'attachmentUrl' },
       ExpressionAttributeValues: {
-        ':attachmentUrl': `https://${this.attachmentBucket}.s3.amazonaws.com/${id}`
+        ':attachmentUrl': `https://${this.attachmentBucket}.s3.amazonaws.com/${s3Key}`
+      },
+      ReturnValues: "UPDATED_NEW"
+    }).promise();
+  }
+
+  async removeTodoAttachment(userId: string, id: string): Promise<void> {
+    await this.docClient.update({
+      TableName: this.todoTable,
+      Key: { id, userId },
+      UpdateExpression: 'set #attachmentUrl = :attachmentUrl',
+      ExpressionAttributeNames: { '#attachmentUrl': 'attachmentUrl' },
+      ExpressionAttributeValues: {
+        ':attachmentUrl': ''
       },
       ReturnValues: "UPDATED_NEW"
     }).promise();

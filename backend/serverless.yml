@@ -35,7 +35,6 @@ provider:
     restApi: true
 
 custom:
-  topicName: nguyenlc1-attachment-topic-${self:provider.stage}
   documentation:
     api:
       info:
@@ -49,21 +48,17 @@ custom:
       - name: UpdateTodoRequest
         contentType: application/json
         schema: ${file(models/update-todo-model.json)}
+      - name: S3KeyRequest
+        contentType: application/json
+        schema: ${file(models/s3-key-model.json)}
+      - name: TodoAttachmentRequest
+        contentType: application/json
+        schema: ${file(models/todo-attachment-model.json)}
+      - name: DeleteTodoRequest
+        contentType: application/json
+        schema: ${file(models/delete-todo-model.json)}
 
 functions:
-  ResizeImage:
-    handler: src/lambda/s3/resizeImage.handler
-    events:
-      - sns:
-          arn:
-            Fn::Join:
-              - ':'
-              - - arn:aws:sns
-                - Ref: AWS::Region
-                - Ref: AWS::AccountId
-                - ${self:custom.topicName}
-          topicName: ${self:custom.topicName}
-
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
@@ -131,10 +126,16 @@ functions:
     handler: src/lambda/http/deleteTodo.handler
     events:
       - http:
-          method: delete
-          path: todos/{todoId}
+          method: post
+          path: todos/delete-item
           cors: true
           authorizer: Auth
+          reqValidatorName: onlyBody
+          documentation:
+            summary: Remove todo
+            description: Remove todo
+            requestModels:
+              application/json: DeleteTodoRequest
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -151,9 +152,36 @@ functions:
     events:
       - http:
           method: post
-          path: todos/{todoId}/attachment
+          path: todos/upload-attachment
           cors: true
           authorizer: Auth
+          reqValidatorName: onlyBody
+          documentation:
+            summary: Generate upload url
+            description: Generate upload url
+            requestModels:
+              application/json: S3KeyRequest
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+          - s3:GetObject
+        Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*
+  
+  GenerateDownUrl:
+    handler: src/lambda/http/generateDownloadUrl.handler
+    events:
+      - http:
+          method: post
+          path: todos/download-attachment
+          cors: true
+          authorizer: Auth
+          reqValidatorName: onlyBody
+          documentation:
+            summary: Generate download url
+            description: Generate download url
+            requestModels:
+              application/json: S3KeyRequest
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -169,11 +197,42 @@ functions:
           path: todos/{todoId}/attachment
           cors: true
           authorizer: Auth
+          reqValidatorName: onlyBody
+          documentation:
+            summary: Update todo's attachment
+            description: Update todo's attachment
+            requestModels:
+              application/json: S3KeyRequest
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+  
+  RemoveTodoAttachment:
+    handler: src/lambda/http/removeAttachment.handler
+    events:
+      - http:
+          method: post
+          path: todos/delete-attachment
+          cors: true
+          authorizer: Auth
+          reqValidatorName: onlyBody
+          documentation:
+            summary: Remove todo attachment
+            description: Remove todo attachment
+            requestModels:
+              application/json: TodoAttachmentRequest
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - s3:DeleteObject
+          - s3:GetObject
+        Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*
 
 resources:
   Resources:
@@ -225,39 +284,10 @@ resources:
             Projection:
               ProjectionType: ALL # What attributes will be copied to an index
 
-    AttachmentTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        DisplayName: Attachment bucket topic
-        TopicName: ${self:custom.topicName}
-    
-    SNSTopicPolicy:
-      Type: AWS::SNS::TopicPolicy
-      Properties:
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                AWS: "*"
-              Action: sns:Publish
-              Resource:
-                !Ref AttachmentTopic
-              Condition:
-                ArnLike:
-                  AWS:SourceArn: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}
-        Topics:
-          - !Ref AttachmentTopic
-
     AttachmentsBucket:
       Type: AWS::S3::Bucket
-      DependsOn: SNSTopicPolicy
       Properties:
         BucketName: ${self:provider.environment.ATTACHMENT_S3_BUCKET}
-        NotificationConfiguration:
-          TopicConfigurations:
-            - Event: s3:ObjectCreated:Put
-              Topic: !Ref AttachmentTopic
         CorsConfiguration:
           CorsRules:
             -
