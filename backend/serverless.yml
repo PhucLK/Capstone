@@ -1,6 +1,7 @@
-org: nguyenlecao
+org: phuclk
 console: true
-service: nguyenlc1-serverless-todo-app
+app: serverless-todo-app
+service: serverless-todo-app
 
 plugins:
   - serverless-webpack
@@ -25,10 +26,11 @@ provider:
     apiGateway: true
 
   environment:
-    TODOS_TABLE: nguyenlc1-todos-${self:provider.stage}
+    TODOS_TABLE: Todos-${self:provider.stage}
     TODOS_INDEX: UserIdIndex
-    ATTACHMENT_S3_BUCKET: nguyenlc1-serverless-todo-images-${self:provider.stage}
+    ATTACHMENT_S3_BUCKET: serverless-c4-todo-images-sdfd343434-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
+    JSON_WEB_KEY_SET: https://dev-ffs0ptqzqfsyynil.us.auth0.com/.well-known/jwks.json
 
   logs:
     # Enable API Gateway logs

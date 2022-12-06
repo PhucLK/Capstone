@@ -8,7 +8,7 @@ import { JwtToken } from '../types/Jwt'
 
 const logger = createLogger('auth')
 
-const jwksUrl = 'https://dev-lzqo9yig.us.auth0.com/.well-known/jwks.json';
+const jwksUrl = process.env.JSON_WEB_KEY_SET
 
 export const handler = async (event: CustomAuthorizerEvent): Promise<CustomAuthorizerResult> => {
   logger.info('Authorizing a user', event.authorizationToken)

@@ -40,6 +40,6 @@
     "typescript": "^3.4.1",
     "webpack": "^4.46.0"
   },
-  "author": "nguyenlc1",
+  "author": "Ivan Mushketyk",
   "license": "MIT"
 }
