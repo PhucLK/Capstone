@@ -1,23 +1,23 @@
 org: phuclk
-app: serverless-todo-app-2
+# app: serverless-todo-app-2
 service: serverless-todo-app-2
 
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
-  - serverless-plugin-tracing
-  - serverless-reqvalidator-plugin
-  - serverless-aws-documentation
+  # - serverless-plugin-tracing
+  # - serverless-reqvalidator-plugin
+  # - serverless-aws-documentation
 
 package:
   individually: false
 
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: nodejs12.x
   # lambdaHashingVersion: '20201221'
 
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage, 'dev3'}
   region: ${opt:region, 'us-east-1'}
 
   tracing:
